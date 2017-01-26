@@ -19,11 +19,15 @@
 
 pthread_mutex_t lock;
 pthread_mutex_t lock1;
-long double sum = 0;
+pthread_mutex_t lock2;
+int num_threads = 0;
+int num_threads_depth_limit = 0;
+int num_threads_thresh = 0;
+
 long double STEP_SIZE;
-long double THRESHHOLD = 0.001;
+long double THRESHHOLD = 5000;
 // long double MID_DEPTH = 2;
-long double MAX_DEPTH = 6;
+long double MAX_DEPTH = 8;
 //double function = 10.0;
 int* a;
 int* b;
@@ -47,6 +51,11 @@ typedef struct {
 } bounds;
 
 void *intergrate(void *bound){
+//count the number of threads
+        pthread_mutex_lock(&lock);
+        num_threads = num_threads + 1;
+        pthread_mutex_unlock(&lock);
+
 // create some local vars
     long double* area = malloc(sizeof(long double));
     //long double area = 0;
@@ -66,6 +75,7 @@ void *intergrate(void *bound){
 // if the value of the functions at the bounds is more than the threashold spilt it in half
     if(((fabsl(fa-favg)>THRESHHOLD) || (fabsl(fb - favg) > THRESHHOLD) || (fabsl(fab - favg) > THRESHHOLD) ) && (level < MAX_DEPTH)){
         printf("Creating new threads\n");
+
 // create new bounds
         bounds left, right;
         left.a = a;
@@ -91,6 +101,11 @@ void *intergrate(void *bound){
             printf("ERROR - return code from right pthread_create: %d\n", rcr);
             exit(-1);
         }
+
+// //count the number of threads
+//         pthread_mutex_lock(&lock);
+//         num_threads = num_threads + 2;
+//         pthread_mutex_unlock(&lock);
 
 // join threads
         void* left_a;
@@ -123,14 +138,25 @@ void *intergrate(void *bound){
         free(right_a);
 
     }else{
+//check if the thread is being split because of level
+        if(level >= MAX_DEPTH){
+            pthread_mutex_lock(&lock1);
+            num_threads_depth_limit = num_threads_depth_limit + 1;
+            pthread_mutex_unlock(&lock1);
+        }else{
+            pthread_mutex_lock(&lock2);
+            num_threads_thresh = num_threads_thresh + 1;
+            pthread_mutex_unlock(&lock2);
+        }
+
 // otherwise calc the area using trap rule
-        //trap rule ( first order )
+    //trap rule ( first order )
         //*area = (fa + (fabsl(fb - fa)) * 0.5 ) * (fabsl(b - a));
         
-        //trap rule ( second order )
+    //trap rule ( second order )
         //*area = ((fa + (fabsl(fab - fa)) * 0.5 ) * (fabsl((b - a)/2))) +  ((fb + (fabsl(fab - fb)) * 0.5 ) * (fabsl((b - a)/2)));
         
-        //simposons rule ( first order )
+    //simposons rule ( first order )
         // area = h/3(fa + 4fab + fb);
         *area = ((fabsl(b - a)/2)/3)*(fa + 4*fab + fb);
 
@@ -143,6 +169,23 @@ void *intergrate(void *bound){
 
 int main(int argc, const char* argv[]){
     printf("hello\n");
+
+// init mutex lock
+    if (pthread_mutex_init(&lock, NULL) != 0)
+        {
+            printf("\nlock mutex init failed\n");
+            return 1;
+        }
+    if (pthread_mutex_init(&lock1, NULL) != 0)
+        {
+            printf("\nlock1 mutex init failed\n");
+            return 1;
+        }
+    if (pthread_mutex_init(&lock2, NULL) != 0)
+        {
+            printf("\nlock2 mutex init failed\n");
+            return 1;
+        }
 
 // create top thread vars
     pthread_t top_t;
@@ -181,6 +224,7 @@ int main(int argc, const char* argv[]){
     printf("Threshold: %Lf\n", THRESHHOLD);
     printf("Depth: %Lf\n", MAX_DEPTH);
     long double result = *(long double*)total_area;
+    free(total_area);
     printf("Result: %Lf\n", result);
     long double adiff = fabsl(result - reS);
     printf("Differance: %Lf\n", adiff);
@@ -190,13 +234,18 @@ int main(int argc, const char* argv[]){
 
 
 // output time
-    long double msec = diff * 1000 / CLOCKS_PER_SEC;
+    long double msec = diff * 1000.00 / CLOCKS_PER_SEC;
     printf("Time taken %d seconds %d milliseconds \n", (int)msec/1000, (int)msec%1000);
     printf("Time taken %Lf Miliseconds\n", msec);
 
-    // pthread_mutex_destroy(&lock);
-    // pthread_mutex_destroy(&lock1);
-
+// output number of threads
+    printf("Total number of threads: %d \n", num_threads);
+    printf("Number of max depth threads: %d \n", num_threads_depth_limit);
+    printf("Number of threshold threads: %d \n", num_threads_thresh);
+    pthread_mutex_destroy(&lock);
+    pthread_mutex_destroy(&lock1);
+    pthread_mutex_destroy(&lock2);
+    
     return 0;
 }
 
