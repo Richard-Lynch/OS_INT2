@@ -21,9 +21,9 @@ pthread_mutex_t lock;
 pthread_mutex_t lock1;
 long double sum = 0;
 long double STEP_SIZE;
-long double THRESHHOLD = 0.01;
+long double THRESHHOLD = 0.001;
 // long double MID_DEPTH = 2;
-long double MAX_DEPTH = 2;
+long double MAX_DEPTH = 6;
 //double function = 10.0;
 int* a;
 int* b;
@@ -126,8 +126,10 @@ void *intergrate(void *bound){
 // otherwise calc the area using trap rule
         //trap rule ( first order )
         //*area = (fa + (fabsl(fb - fa)) * 0.5 ) * (fabsl(b - a));
+        
         //trap rule ( second order )
         //*area = ((fa + (fabsl(fab - fa)) * 0.5 ) * (fabsl((b - a)/2))) +  ((fb + (fabsl(fab - fb)) * 0.5 ) * (fabsl((b - a)/2)));
+        
         //simposons rule ( first order )
         // area = h/3(fa + 4fab + fb);
         *area = ((fabsl(b - a)/2)/3)*(fa + 4*fab + fb);
@@ -151,7 +153,7 @@ int main(int argc, const char* argv[]){
     top_bounds.level = 0;
 
 // start clock
-    clock_t start = clock(), diff;
+    clock_t start = clock();
     printf("Creating top thread.\n");
 // create first thread
     rc = pthread_create(&top_t, NULL, intergrate, (void*)&top_bounds);        
@@ -170,7 +172,7 @@ int main(int argc, const char* argv[]){
     }
     printf("Finished Joining threads\n");
 // stop the cock
-    diff = clock() - start;
+    clock_t diff = clock() - start;
 
 // output result
     printf("---RESULTS----\n");
@@ -188,8 +190,9 @@ int main(int argc, const char* argv[]){
 
 
 // output time
-    int msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("Time taken %d seconds %d milliseconds\n", msec/1000, msec%1000);
+    long double msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Time taken %d seconds %d milliseconds \n", (int)msec/1000, (int)msec%1000);
+    printf("Time taken %Lf Miliseconds\n", msec);
 
     // pthread_mutex_destroy(&lock);
     // pthread_mutex_destroy(&lock1);
