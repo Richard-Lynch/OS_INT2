@@ -21,8 +21,9 @@ pthread_mutex_t lock;
 pthread_mutex_t lock1;
 long double sum = 0;
 long double STEP_SIZE;
-long double THRESHHOLD = 0.01;
-long double MAX_DEPTH = 4;
+long double THRESHHOLD = 0.5;
+long double MID_DEPTH = 3;
+long double MAX_DEPTH = 5;
 //double function = 10.0;
 int* a;
 int* b;
@@ -52,22 +53,25 @@ void *intergrate(void *bound){
 
     long double a = ((bounds*)bound)->a;
     long double b = ((bounds*)bound)->b;
+    long double ab = ((b+a)/2);
 
     long double fa = fabsl(function(a));
     long double fb = fabsl(function(b));
+    long double fab = fabsl(function(ab));
+    long double favg = (fa+fb+fab)/3;
     
     int level = ((bounds*)bound)->level;
+    //bool a = true;
 
 // if the value of the functions at the bounds is more than the threashold spilt it in half
-    if((fabsl(fb-fa)>THRESHHOLD) && (level < MAX_DEPTH)){
+    if(((fabsl(fa-favg)>THRESHHOLD) || (fabsl(fb - favg) > THRESHHOLD) || (fabsl(fab - favg) > THRESHHOLD) ) && (level < MAX_DEPTH)){
         printf("Creating new threads\n");
-
 // create new bounds
         bounds left, right;
         left.a = a;
-        left.b = ((b-a))/2 + a;
+        left.b = ((b+a))/2;
         left.level = ((bounds*)bound)->level + 1;
-        right.a = ((b-a))/2 + a;
+        right.a = ((b+a))/2;
         right.b = b;
         right.level = ((bounds*)bound)->level + 1;
 
@@ -120,7 +124,14 @@ void *intergrate(void *bound){
 
     }else{
 // otherwise calc the area using trap rule
-        *area = (fa + (fabsl(fb - fa)) * 0.5 ) * (fabsl(b - a));
+        //trap rule ( first order )
+        //*area = (fa + (fabsl(fb - fa)) * 0.5 ) * (fabsl(b - a));
+        //trap rule ( second order )
+        //*area = ((fa + (fabsl(fab - fa)) * 0.5 ) * (fabsl((b - a)/2))) +  ((fb + (fabsl(fab - fb)) * 0.5 ) * (fabsl((b - a)/2)));
+        //simposons rule ( first order )
+        // area = h/3(fa + 4fab + fb);
+        *area = ((fabsl(b - a)/2)/3)*(fa + 4*fab + fb);
+
     }
 //  output area
     printf("Area: %Lf\n", *area); 
@@ -162,12 +173,16 @@ int main(int argc, const char* argv[]){
     diff = clock() - start;
 
 // output result
+    printf("---RESULTS----\n");
+    printf("Threshold: %Lf\n", THRESHHOLD);
+    printf("Depth: %Lf\n", MAX_DEPTH);
     long double result = *(long double*)total_area;
     printf("Result: %Lf\n", result);
     long double adiff = fabsl(result - reS);
     printf("Differance: %Lf\n", adiff);
     long double perc = (adiff/result)*100;
     printf("Percentage: %Lf\n", perc);
+
 
 
 // output time
