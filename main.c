@@ -6,15 +6,15 @@
 #define NUM_THREADS 6
 #define NUM_STEPS 50000.00
 
-#define A_location 10.34
-#define B_location 20.12
+#define A_location 20.34
+#define B_location 50.12
 #define C 1
 #define X1 3
 #define X2 -2
 #define X3 4
 #define X4 0
 #define X5 0
-#define reS 148207.00
+#define reS 6063910.00
 
 
 pthread_mutex_t lock;
@@ -22,7 +22,7 @@ pthread_mutex_t lock1;
 long double sum = 0;
 long double STEP_SIZE;
 long double THRESHHOLD = 0.5;
-long double MID_DEPTH = 3;
+// long double MID_DEPTH = 2;
 long double MAX_DEPTH = 5;
 //double function = 10.0;
 int* a;
