@@ -8,22 +8,22 @@
 
 #define A_location 20.34
 #define B_location 50.12
-#define C 1
-#define X1 3
-#define X2 -2
-#define X3 4
-#define X4 0
-#define X5 0
-#define reS 6063910.00
+#define C 25000.00
+#define X1 11.00
+#define X2 -47.5
+#define X3 1.00
+#define X4 0.00
+#define X5 0.00
+#define reS 430591.00
 
 
 pthread_mutex_t lock;
 pthread_mutex_t lock1;
 long double sum = 0;
 long double STEP_SIZE;
-long double THRESHHOLD = 0.5;
+long double THRESHHOLD = 0.01;
 // long double MID_DEPTH = 2;
-long double MAX_DEPTH = 5;
+long double MAX_DEPTH = 2;
 //double function = 10.0;
 int* a;
 int* b;
@@ -174,6 +174,8 @@ int main(int argc, const char* argv[]){
 
 // output result
     printf("---RESULTS----\n");
+    // printf("Fucntion: (%f)x^5 (%f)x^4 (%f)x^3 (%f)x^2 (%f)x^1 (%f) \n", X5, X4, X3, X2, X1, C);
+    printf("Fucntion: (%f)x^3 (%f)x^2 (%f)x^1 (%f) \n", X3, X2, X1, C);
     printf("Threshold: %Lf\n", THRESHHOLD);
     printf("Depth: %Lf\n", MAX_DEPTH);
     long double result = *(long double*)total_area;
