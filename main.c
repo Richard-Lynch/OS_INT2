@@ -14,7 +14,8 @@
 #define X3 1.00
 #define X4 0.00
 #define X5 0.00
-#define reS 430591.00
+// #define reS 430591.00
+#define reS 104856.00
 
 
 pthread_mutex_t lock;
@@ -25,21 +26,32 @@ int num_threads_depth_limit = 0;
 int num_threads_thresh = 0;
 
 long double STEP_SIZE;
-long double THRESHHOLD = 5000;
+long double THRESHHOLD = 20;
 // long double MID_DEPTH = 2;
-long double MAX_DEPTH = 8;
-//double function = 10.0;
+long double MAX_DEPTH = 7;//going from depth 10 to depth 8 reduces time by 2 orders of mag
+// double function = 10.0;
 int* a;
 int* b;
 
-long double function (long double x){
+long double function1 (long double x){
     long double result = 0.00;
     result += C;
-    result += (x * X1);
+    result += (cos(x) * X1);
     result += (x*x * X2);
     result += (x*x*x * X3);
     result += (x*x*x*x * X4);
     result += (x*x*x*x*x * X5);
+    return result;
+}
+
+long double function (long double x){
+    long double result = 0.00;
+    result += x*x*(sin(10*x)) + 100.00*x;
+    // result += (cos(x) * X1);
+    // result += (x*x * X2);
+    // result += (x*x*x * X3);
+    // result += (x*x*x*x * X4);
+    // result += (x*x*x*x*x * X5);
     return result;
 }
 
