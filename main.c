@@ -47,7 +47,7 @@ long double function1 (long double x){
 
 long double function (long double x){
     long double result = 0.00;
-    result = x*x*(sin(10.00*x)) + 100.00*x;
+    result = x*x*x*(sin(10.00*x)) + 100.00*x;
     return result;
 }
 
