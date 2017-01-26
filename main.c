@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h> 
-#define NUM_THREADS 6
-#define NUM_STEPS 500000.00
-#define A_location 20.34
-#define B_location 50.12
+#define NUM_THREADS 4
+long double NUM_STEPS = 10000.00;
+long double A_location = 20.34;
+long double B_location = 50.12;
 #define C 25000.00
 #define X1 11.00
 #define X2 -47.5
@@ -47,7 +47,7 @@ long double function1 (long double x){
 
 long double function (long double x){
     long double result = 0.00;
-    result += x*x*(sin(10.00*x)) + 100.00*x;
+    result = x*x*(sin(10.00*x)) + 100.00*x;
     return result;
 }
 
@@ -62,6 +62,7 @@ typedef struct {
 
 void *intergrate(void *bound){
 // create some local vars
+    int* loop = malloc(sizeof(int));
     long double area = 0;
 
     long double a = ((bounds*)bound)->a;
@@ -74,14 +75,10 @@ void *intergrate(void *bound){
     //long double favg = (fa+fb+fab)/3;
     
     int level = ((bounds*)bound)->level;
-    int loop = 0;
+    
 
 while(a < B_location){
 // calculate new values
-    a = ((bounds*)bound)->a;
-    b = ((bounds*)bound)->b;
-    ab = ((b+a)/2);
-
     fa = fabsl(function(a));
     fb = fabsl(function(b));
     fab = fabsl(function(ab));
@@ -94,7 +91,7 @@ while(a < B_location){
         
     //simposons rule ( first order )
         // area = h/3(fa + 4fab + fb);
-        area = ((STEP_SIZE)/3)*(fa + 4*fab + fb);
+        area = ((STEP_SIZE/2)/3)*(fa + 4*fab + fb);
 // output area
         printf("Thread: %d Area: %Lf\n",level, area); //AREA_TOTAL,
         pthread_mutex_lock(&lock);
@@ -106,10 +103,11 @@ while(a < B_location){
         A_CURR = A_CURR + STEP_SIZE;
         b = A_CURR;
         pthread_mutex_unlock(&lock1);
-        loop++;
+        ab = ((b+a)/2);
+        (*loop)++;
 }
     //return (void*)area;
-    pthread_exit((void*)&area);
+    pthread_exit((void*)loop);
 }
 
 int main(int argc, const char* argv[]){
@@ -184,7 +182,7 @@ int main(int argc, const char* argv[]){
     // printf("Threshold: %Lf\n", THRESHHOLD);
     printf("Total number of threads: %d \n", NUM_THREADS);
     printf("Step Size: %Lf\n", STEP_SIZE);
-    printf("Steps: %f\n", NUM_STEPS);
+    printf("Steps: %Lf\n", NUM_STEPS);
 
     printf("Result: %Lf\n", AREA_TOTAL);
     long double adiff = fabsl(AREA_TOTAL - reS);
