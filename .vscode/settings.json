@@ -3,6 +3,8 @@
         "*.sh": "shellscript",
         "bitset": "cpp",
         "*h*h*h*hfunctional": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "*hvalarray": "cpp",
+        "*c*h*h*h*h*h*h*h*h*h*h*h*h*h*h*h*h*h*hrope": "cpp"
     }
 }
