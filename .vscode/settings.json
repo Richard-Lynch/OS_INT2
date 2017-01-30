@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "*.sh": "shellscript"
+        "*.sh": "shellscript",
+        "bitset": "cpp",
+        "*h*h*h*hfunctional": "cpp",
+        "functional": "cpp"
     }
 }

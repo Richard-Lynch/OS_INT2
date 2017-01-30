@@ -3,59 +3,31 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h> 
-#define NUM_THREADS 6
-#define NUM_STEPS 50000.00
 
-#define A_location 20.34
-#define B_location 50.12
-#define C 25000.00
-#define X1 11.00
-#define X2 -47.5
-#define X3 1.00
-#define X4 0.00
-#define X5 0.00
-// #define reS 430591.00
-#define reS 3914110.00
+long double NUM_THREADS = 6.00L;
+long double NUM_STEPS = 50000.00L;
+long double STEP_SIZE = 0.00L;
+
+long double A_location = -1.00L;
+long double B_location = 1.00L;
+long double reS = 3.14159265359L;
+long double THRESHHOLD = 0.0005L;
+long double MAX_DEPTH = 10.00L;//going from depth 10 to depth 8 reduces time by 2 orders of mag
 
 
-pthread_mutex_t lock;
+pthread_mutex_t num_threads_lock;
 pthread_mutex_t lock1;
 pthread_mutex_t lock2;
 int num_threads = 0;
 int num_threads_depth_limit = 0;
 int num_threads_thresh = 0;
 
-long double STEP_SIZE;
-//long double THRESHHOLD = 20;
-long double THRESHHOLD = 100;
-// long double MID_DEPTH = 2;
-long double MAX_DEPTH = 7;//going from depth 10 to depth 8 reduces time by 2 orders of mag
-// double function = 10.0;
 int* a;
 int* b;
 
-long double function1 (long double x){
-    long double result = 0.00;
-    result += C;
-    result += (cos(x) * X1);
-    result += (x*x * X2);
-    result += (x*x*x * X3);
-    result += (x*x*x*x * X4);
-    result += (x*x*x*x*x * X5);
-    return result;
-}
-
 long double function (long double x){
-    //long double result = 0.00;
-    //result += x*x*(sin(10*x)) + 100.00*x;
-    // result += (cos(x) * X1);
-    long double result = x*x*x*(sin(10*x)) + 100 * x *x;
-    // result += C;
-    // result += (x * X1);
-    // result += (x*x * X2);
-    // result += (x*x*x * X3);
-    // result += (x*x*x*x * X4);
-    // result += (x*x*x*x*x * X5);
+    long double result = 2.00L*sqrt(1.00L-(x*x));
+    // long double result = 4.00L*(1.00L/(x));
     return result;
 }
 
@@ -68,36 +40,35 @@ typedef struct {
 
 void *intergrate(void *bound){
 //count the number of threads
-        pthread_mutex_lock(&lock);
-        num_threads = num_threads + 1;
-        pthread_mutex_unlock(&lock);
+    pthread_mutex_lock(&num_threads_lock);
+    num_threads = num_threads + 1;
+    pthread_mutex_unlock(&num_threads_lock);
 
 // create some local vars
     long double* area = malloc(sizeof(long double));
-    //long double area = 0;
 
     long double a = ((bounds*)bound)->a;
     long double b = ((bounds*)bound)->b;
-    long double ab = ((b+a)/2);
+    long double ab = ((b+a)/2.00L);
 
     long double fa = fabsl(function(a));
     long double fb = fabsl(function(b));
     long double fab = fabsl(function(ab));
-    long double favg = (fa+fb+fab)/3;
+    long double favg = (fa+fb+fab)/3.00L;
     
     int level = ((bounds*)bound)->level;
     //bool a = true;
 
-// if the value of the functions at the bounds is more than the threashold spilt it in half
+// if the value of the functions at the bounds is more than the threashold spilt it in ha.10lf
     if(((fabsl(fa-favg)>THRESHHOLD) || (fabsl(fb - favg) > THRESHHOLD) || (fabsl(fab - favg) > THRESHHOLD) ) && (level < MAX_DEPTH)){
         printf("Creating new threads\n");
 
 // create new bounds
         bounds left, right;
         left.a = a;
-        left.b = ((b+a))/2;
+        left.b = ((b+a))/2.00L;
         left.level = ((bounds*)bound)->level + 1;
-        right.a = ((b+a))/2;
+        right.a = ((b+a))/2.00L;
         right.b = b;
         right.level = ((bounds*)bound)->level + 1;
 
@@ -118,11 +89,6 @@ void *intergrate(void *bound){
             exit(-1);
         }
 
-// //count the number of threads
-//         pthread_mutex_lock(&lock);
-//         num_threads = num_threads + 2;
-//         pthread_mutex_unlock(&lock);
-
 // join threads
         void* left_a;
         void* right_a;
@@ -130,12 +96,12 @@ void *intergrate(void *bound){
         rcl = pthread_join(left_t, &left_a);
         double long left_area = *(long double*)left_a;
         //free(left_a);
-        printf("left area: %Lf\n", left_area);
+        printf("left area: %.10Lf\n", left_area);
 
         rcr = pthread_join(right_t, &right_a);
-        double long right_area = *(long double*)right_a;
+        long double right_area = *(long double*)right_a;
         //free(right_a);
-        printf("right area: %Lf\n", right_area);
+        printf("right area: %.10Lf\n", right_area);
 
         if(rcl){
             printf("ERROR - return code from left pthread_join: %d\n", rcl);
@@ -174,22 +140,26 @@ void *intergrate(void *bound){
         
     //simposons rule ( first order )
         // area = h/3(fa + 4fab + fb);
-        *area = ((fabsl(b - a)/2)/3)*(fa + 4*fab + fb);
+        long double two = 2.0000L;
+        long double three = 3.0000L;
+        long double four = 4.0000L;
+        *area = ((fabsl(b - a)/two)/three)*(fa + four*fab + fb);
 
     }
 //  output area
-    printf("Area: %Lf\n", *area); 
+    printf("Area: %.10Lf\n", *area); 
     //return (void*)area;
     pthread_exit(area);
 }
+// -----------------------------------
 
 int main(int argc, const char* argv[]){
     printf("hello\n");
 
 // init mutex lock
-    if (pthread_mutex_init(&lock, NULL) != 0)
+    if (pthread_mutex_init(&num_threads_lock, NULL) != 0)
         {
-            printf("\nlock mutex init failed\n");
+            printf("\nnum_threads_lock mutex init failed\n");
             return 1;
         }
     if (pthread_mutex_init(&lock1, NULL) != 0)
@@ -202,7 +172,6 @@ int main(int argc, const char* argv[]){
             printf("\nlock2 mutex init failed\n");
             return 1;
         }
-
 // create top thread vars
     pthread_t top_t;
     int rc;
@@ -212,6 +181,11 @@ int main(int argc, const char* argv[]){
     top_bounds.level = 0;
 
 // start clock
+    // mach_timespec_t ti_start = {0,0};
+    // mach_timespec_t ti_end = {0,0};
+    // mach_timespec_t ti_elap = {0,0};
+    // uint64_t test = mach_absolute_time(void);
+    // clock_get_time(, &ti_start);
     clock_t start = clock();
     printf("Creating top thread.\n");
 // create first thread
@@ -231,34 +205,39 @@ int main(int argc, const char* argv[]){
     }
     printf("Finished Joining threads\n");
 // stop the cock
-    clock_t diff = clock() - start;
+    clock_t tdiff = clock() - start;
+    // clock_get_time(CLOCK_THREAD_CPUTIME_ID, &ti_end);
+    // ti_elap = diff(ti_start, ti_end);
+
 
 // output result
     printf("---RESULTS----\n");
-    // printf("Fucntion: (%f)x^5 (%f)x^4 (%f)x^3 (%f)x^2 (%f)x^1 (%f) \n", X5, X4, X3, X2, X1, C);
-    printf("Fucntion: (%f)x^3 (%f)x^2 (%f)x^1 (%f) \n", X3, X2, X1, C);
-    printf("Threshold: %Lf\n", THRESHHOLD);
-    printf("Depth: %Lf\n", MAX_DEPTH);
+    printf("Fucntion: 2! x SQRT(1-x^2)\n");
+    printf("Actual: %.10Lf\n",reS);
+    printf("Threshold: %.10Lf\n", THRESHHOLD);
+    printf("Depth: %.10Lf\n", MAX_DEPTH);
     long double result = *(long double*)total_area;
     free(total_area);
-    printf("Result: %Lf\n", result);
+    printf("Result: %.10Lf\n", result);
     long double adiff = fabsl(result - reS);
-    printf("Differance: %Lf\n", adiff);
-    long double perc = (adiff/result)*100;
-    printf("Percentage: %Lf\n", perc);
+    printf("Differance: %.10Lf\n", adiff);
+    long double perc = (adiff/result)*100.00L;
+    printf("Percentage: %.10Lf\n", perc);
 
 
 
 // output time
-    long double msec = diff * 1000.00 / CLOCKS_PER_SEC;
+    long double msec = tdiff * 1000.00L / CLOCKS_PER_SEC;
     printf("Time taken %d seconds %d milliseconds \n", (int)msec/1000, (int)msec%1000);
-    printf("Time taken %Lf Miliseconds\n", msec);
+    printf("Time taken %.10Lf Miliseconds\n", msec);
+
+    //printf("REAL Time taken %d seconds %d milliseconds %d nanoseconds \n", ti_elap.tv_sec, (int)ti_elap.tv_nsec/1000, (int)ti_elap.tv_sec%1000);
 
 // output number of threads
     printf("Total number of threads: %d \n", num_threads);
     printf("Number of max depth threads: %d \n", num_threads_depth_limit);
     printf("Number of threshold threads: %d \n", num_threads_thresh);
-    pthread_mutex_destroy(&lock);
+    pthread_mutex_destroy(&num_threads_lock);
     pthread_mutex_destroy(&lock1);
     pthread_mutex_destroy(&lock2);
     
