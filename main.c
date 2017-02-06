@@ -4,9 +4,10 @@
 #include <time.h>
 #include <math.h> 
 
-#define NUM_THREADS 4
 
-long double NUM_STEPS = 10000.00;
+int NUM_THREADS = 4;
+int NUM_STEPS;
+int TOTAL_STEPS = 10000;
 long double A_location = 0;
 long double B_location = 1;
 long double STEP_SIZE = 0;
@@ -29,6 +30,7 @@ void *intergrate(void *bound){
 // create some local vars
     int loops = 0;
     long double* area = malloc(sizeof(long double));
+    *area = 0.00L;
 
     long double A = ((bounds*)bound)->a;
     long double B = ((bounds*)bound)->b;
@@ -61,13 +63,35 @@ void *intergrate(void *bound){
         loops++;
     }
     // output area
-    printf("Thread: %d Loops: %d Area: %Lf\n",index, loops, *area);
+    //printf("Thread: %d Loops: %d Area: %Lf\n",index, loops, *area);
     pthread_exit((void*)area);
 }
 
 int main(int argc, const char* argv[]){
     printf("hello\n");
 
+// read args
+    int max_threads;
+    if (argc < 2 || (max_threads = atoi(argv[1])) <= 0)
+    { //convert the first arg to an int and set n
+        //if there is not arg entered
+        printf("This program computes pi\n"
+               "\"usage: main n\" , where n is the number of threads and p is the number of steps per thread\n");
+        exit(1);
+    }
+
+    long double results[max_threads];
+    
+for(int i = 0; i < max_threads; i++){
+// initilise vals
+    A_location = 0L;
+    B_location = 1L;
+    STEP_SIZE = 0L;
+    A_CURR = 0L;
+    AREA_TOTAL= 0L;
+
+    NUM_THREADS = i+1;
+    NUM_STEPS = TOTAL_STEPS/NUM_THREADS;
 // create thread vars
     pthread_t threads[NUM_THREADS];
     int rc, t;
@@ -90,7 +114,7 @@ int main(int argc, const char* argv[]){
             printf("ERROR - return code from pthread_create: %d ERROR: %d\n", t, rc);
             exit(-1);
         }
-        printf("Finished creating thread %d\n", t);
+        // printf("Finished creating thread %d\n", t);
     }
 
 // join the threads
@@ -102,11 +126,11 @@ int main(int argc, const char* argv[]){
             printf("ERROR - return code from pthread_join: %d ERROR: %d\n", t, rc);
             exit(-1);
         }
-        printf("Finished Joining thread %d: area: %Lf\n",t, *(long double*)temp_area);
+        //printf("Finished Joining thread %d: area: %Lf\n",t, *(long double*)temp_area);
         AREA_TOTAL += *(long double*)temp_area;
         free (temp_area);
     }
-    printf("Finished Joining threads\n");
+    //printf("Finished Joining threads\n");
 // stop the cock
     clock_t diff = clock() - start;
 
@@ -114,14 +138,20 @@ int main(int argc, const char* argv[]){
     printf("---RESULTS----\n");
     printf("Total number of threads: %d \n", NUM_THREADS);
     printf("Step Size: %Lf\n", STEP_SIZE);
-    printf("Steps: %Lf\n", NUM_STEPS);
+    printf("Small Step Size: %Lf\n", STEP_SIZE/NUM_STEPS);
+    printf("Steps per thread: %d\n", NUM_STEPS);
     printf("Result: %Lf\n", AREA_TOTAL);
-   
 // output time
     long double msec = diff * 1000.00 / CLOCKS_PER_SEC;
     printf("Time taken %d seconds %d milliseconds \n", (int)msec/1000, (int)msec%1000);
     printf("Time taken %Lf Miliseconds\n", msec);
-
+    results[i] = msec;
+}
+    printf("\n----Summary----\n");
+    printf("%d thread : %Lf milliseconds\n", 1, results[0]);
+    for(int j = 1; j<max_threads; j++){
+        printf("%d threads: %Lf milliseconds\n", j+1, results[j]);
+    }
     return 0;
 }
 
